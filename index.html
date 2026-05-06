@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>史靈 GO！洛克關卡</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+
+    <script>
+      // 這是負責「點擊換頁」的 JavaScript 程式碼
+      AFRAME.registerComponent('card-switcher', {
+        init: function () {
+          let currentCard = 1; // 1 代表故事卡，2 代表題目卡
+          const el = this.el;
+
+          // 監聽點擊事件
+          el.addEventListener('click', function () {
+            if (currentCard === 1) {
+              // 切換成題目卡
+              el.setAttribute('src', '#questionCard');
+              currentCard = 2;
+            } else {
+              // 切換回故事卡 (讓學生可以反覆觀看)
+              el.setAttribute('src', '#storyCard');
+              currentCard = 1;
+            }
+          });
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      
+      <a-assets>
+        <img id="storyCard" src="./story.png" />
+        <img id="questionCard" src="./question.png" />
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-image id="displayCard" src="#storyCard" class="clickable" card-switcher position="0 0 0" height="1.2" width="0.9"></a-image>
+      </a-entity>
+
+    </a-scene>
+  </body>
+</html>
