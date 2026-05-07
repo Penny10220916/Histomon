@@ -5,44 +5,98 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
-    <script>
-      // 這是負責「點擊換頁」的全新 JavaScript 程式碼 (全螢幕觸控版)
-      AFRAME.registerComponent('card-switcher', {
-        init: function () {
-          let currentCard = 1; // 1 代表故事卡，2 代表題目卡
-          const el = this.el;
+    <style>
+      /* 這是浮動在相機上層的介面設計 (CSS) */
+      #ui-layer {
+        display: none; /* 一開始先隱藏 */
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); /* 半透明黑底，讓畫面聚焦在圖卡 */
+        z-index: 1000; /* 確保它在最上層 */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* 控制各個畫面的顯示與隱藏 */
+      .screen { display: none; flex-direction: column; align-items: center; text-align: center; color: white;}
+      .screen.active { display: flex; }
 
-          // 改為監聽「整個手機螢幕(window)」的點擊事件
-          window.addEventListener('click', function () {
-            if (currentCard === 1) {
-              // 切換成題目卡
-              el.setAttribute('src', '#questionCard');
-              currentCard = 2;
-            } else {
-              // 切換回故事卡 (讓學生可以反覆觀看)
-              el.setAttribute('src', '#storyCard');
-              currentCard = 1;
-            }
-          });
-        }
+      /* 圖卡與按鈕的樣式 */
+      img.card { max-width: 90%; max-height: 60vh; object-fit: contain; margin-bottom: 20px; }
+      .btn { padding: 12px 24px; margin: 8px; background: #FFC107; color: #333; font-weight: bold; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+      .btn:active { transform: scale(0.95); } /* 點擊時的縮放動畫 */
+      
+      .options-container { display: flex; justify-content: center; gap: 10px; width: 100%; }
+    </style>
+
+    <script>
+      // 等待整個網頁載入完成
+      document.addEventListener("DOMContentLoaded", function() {
+        const lockeTarget = document.querySelector('#locke-target');
+        const uiLayer = document.querySelector('#ui-layer');
+        const storyScreen = document.querySelector('#story-screen');
+        const questionScreen = document.querySelector('#question-screen');
+        const successScreen = document.querySelector('#success-screen');
+
+        // 【魔法時刻】當相機「找到」洛克畫像時觸發！
+        lockeTarget.addEventListener("targetFound", event => {
+          // 顯示 UI 介面層，並切換到「故事卡」
+          uiLayer.style.display = "flex";
+          storyScreen.classList.add('active');
+        });
+
+        // 按鈕功能：從故事切換到題目
+        window.goToQuestion = function() {
+          storyScreen.classList.remove('active');
+          questionScreen.classList.add('active');
+        };
+
+        // 按鈕功能：檢查答案機制
+        window.checkAnswer = function(answer) {
+          if (answer === 'B') {
+            // 答對了！洛克認為禮儀能改變固執個性 (選項B)
+            questionScreen.classList.remove('active');
+            successScreen.classList.add('active');
+          } else {
+            // 答錯了！跳出提示框
+            alert("❌ 哎呀，精靈逃跑了！\n\n【洛克精靈的提示】：\n知識是『後天經驗』寫上去的，禮儀也是需要學習來改變原本固執的氣質喔！請再試一次吧！");
+          }
+        };
       });
     </script>
   </head>
 
   <body>
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <div id="ui-layer" style="display: none;">
       
-      <a-assets>
-        <img id="storyCard" src="./story.png" />
-        <img id="questionCard" src="./question.png" />
-      </a-assets>
+      <div id="story-screen" class="screen">
+        <img src="story.png" class="card" alt="洛克小知識">
+        <button class="btn" onclick="goToQuestion()">開始挑戰</button>
+      </div>
 
+      <div id="question-screen" class="screen">
+        <img src="question.png" class="card" alt="歷史獸挑戰">
+        <div class="options-container">
+          <button class="btn" onclick="checkAnswer('A')">選 (A)</button>
+          <button class="btn" onclick="checkAnswer('B')">選 (B)</button>
+          <button class="btn" onclick="checkAnswer('C')">選 (C)</button>
+        </div>
+      </div>
+
+      <div id="success-screen" class="screen">
+        <h2 style="color: #FFEB3B; text-shadow: 2px 2px 4px #000;">🎉 成功收服洛克精靈！</h2>
+        <img src="sprite.png" class="card" alt="洛克小精靈">
+        <p>「白板論」知識點數 +10 點</p>
+      </div>
+
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-image id="displayCard" src="#storyCard" card-switcher position="0 0 0" height="1.2" width="0.9"></a-image>
-      </a-entity>
-
+      
+      <a-entity mindar-image-target="targetIndex: 0" id="locke-target"></a-entity>
     </a-scene>
   </body>
 </html>
