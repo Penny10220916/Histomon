@@ -16,11 +16,13 @@
       .screen { display: none; flex-direction: column; align-items: center; text-align: center; color: white;}
       .screen.active { display: flex; }
 
-      img.card { max-width: 90%; max-height: 60vh; object-fit: contain; margin-bottom: 20px; }
-      .btn { padding: 12px 24px; margin: 8px; background: #FFC107; color: #333; font-weight: bold; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+      /* 【放大版】圖卡與按鈕樣式 */
+      img.card { max-width: 95vw; max-height: 65vh; object-fit: contain; margin-bottom: 20px; }
+      .btn { padding: 16px 30px; margin: 5px; background: #FFC107; color: #333; font-weight: bold; border: none; border-radius: 12px; font-size: 22px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 80%; max-width: 300px;}
       .btn:active { transform: scale(0.95); }
       
-      .options-container { display: flex; justify-content: center; gap: 10px; width: 100%; }
+      /* 【直排版】選項容器 */
+      .options-container { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 
       /* 圖鑑專屬樣式 */
       #pokedex-btn {
@@ -68,7 +70,7 @@
           if (answer === 'B') {
             hideAllScreens();
             successScreen.classList.add('active');
-            // 【圖鑑魔法】答對時，將「收集到洛克」的紀錄存入瀏覽器記憶卡中！
+            // 【圖鑑魔法】答對時，存入記憶卡！
             localStorage.setItem('hasLocke', 'true');
           } else {
             alert("❌ 哎呀，精靈逃跑了！\n\n【洛克精靈的提示】：\n知識是『後天經驗』寫上去的，禮儀也是需要學習來改變原本固執的氣質喔！請再試一次吧！");
@@ -81,14 +83,13 @@
           uiLayer.style.display = "flex";
           pokedexScreen.classList.add('active');
           
-          // 檢查記憶卡裡有沒有洛克
           const grid = document.querySelector('.pokedex-grid');
-          grid.innerHTML = ''; // 先清空畫面
+          grid.innerHTML = ''; 
           
           if (localStorage.getItem('hasLocke') === 'true') {
             grid.innerHTML = `
               <div class="sprite-item">
-                <img src="sprite.png" alt="洛克精靈">
+                <img src="locke_sprite.png" alt="洛克精靈">
                 <p>洛克精靈</p>
               </div>`;
           } else {
@@ -111,12 +112,12 @@
     <div id="ui-layer" style="display: none;">
       
       <div id="story-screen" class="screen">
-        <img src="story.png" class="card" alt="洛克小知識">
+        <img src="locke_story.png" class="card" alt="洛克小知識">
         <button class="btn" onclick="goToQuestion()">開始挑戰</button>
       </div>
 
       <div id="question-screen" class="screen">
-        <img src="question.png" class="card" alt="歷史獸挑戰">
+        <img src="locke_question.png" class="card" alt="歷史獸挑戰">
         <div class="options-container">
           <button class="btn" onclick="checkAnswer('A')">選 (A)</button>
           <button class="btn" onclick="checkAnswer('B')">選 (B)</button>
@@ -126,15 +127,14 @@
 
       <div id="success-screen" class="screen">
         <h2 style="color: #FFEB3B; text-shadow: 2px 2px 4px #000;">🎉 成功收服洛克精靈！</h2>
-        <img src="sprite.png" class="card" alt="洛克小精靈">
+        <img src="locke_sprite.png" class="card" alt="洛克小精靈">
         <p>「白板論」知識點數 +10 點</p>
         <button class="btn" onclick="closeUI()">回到相機繼續探索</button>
       </div>
 
       <div id="pokedex-screen" class="screen">
         <h2>📖 歷史精靈圖鑑</h2>
-        <div class="pokedex-grid">
-          </div>
+        <div class="pokedex-grid"></div>
         <button class="btn" onclick="closeUI()">關閉圖鑑</button>
       </div>
 
