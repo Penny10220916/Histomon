@@ -6,52 +6,37 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-      /* 【升級】毛玻璃背景加上 opacity 漸變轉場，讓起霧的過程更自然 */
+      /* 毛玻璃背景與畫面動畫 */
       #ui-layer { 
         display: none; opacity: 0; transition: opacity 0.5s ease-in-out;
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); z-index: 1000; 
+        background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 1000; 
         flex-direction: column; align-items: center; justify-content: center; 
       }
       .screen { display: none; flex-direction: column; align-items: center; text-align: center; color: white; width: 100%;}
-      .screen.active { display: flex; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+      .screen.active { display: flex; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-      @keyframes popIn {
-        0% { transform: scale(0.8); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
-      }
+      @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-      /* 標題與圖卡樣式 */
       .game-title {
         font-size: 22px; color: #FFF; margin-bottom: 15px; width: 90%;
         text-shadow: 0 0 8px #4CAF50, 0 0 15px #4CAF50, 2px 2px 4px rgba(0,0,0,0.8);
         animation: pulse 1.5s infinite; 
       }
-      @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-      }
+      @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-      img.card { 
-        max-width: 95vw; max-height: 55vh; object-fit: contain; margin-bottom: 20px; 
-        filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
-        touch-action: pan-x pan-y pinch-zoom; 
-      }
+      img.card { max-width: 95vw; max-height: 55vh; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5)); touch-action: pan-x pan-y pinch-zoom; }
       
-      /* 3D 按鈕樣式 */
       .btn { 
         padding: 16px 30px; margin: 8px; width: 85%; max-width: 320px;
         background: linear-gradient(180deg, #FFD54F 0%, #FFB300 100%); 
         color: #5D4037; font-weight: 900; font-size: 22px; 
         border: 3px solid #FFF8E1; border-radius: 16px; cursor: pointer; 
-        box-shadow: 0 6px 0 #FF8F00, 0 10px 15px rgba(0,0,0,0.4); 
-        transition: all 0.1s ease;
+        box-shadow: 0 6px 0 #FF8F00, 0 10px 15px rgba(0,0,0,0.4); transition: all 0.1s ease;
       }
       .btn:active { transform: translateY(6px); box-shadow: 0 0px 0 #FF8F00, 0 4px 6px rgba(0,0,0,0.4); }
       .options-container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; }
 
-      /* 右上角圖鑑按鈕 */
       #pokedex-btn { 
         position: fixed; top: 20px; right: 20px; z-index: 2000; 
         background: linear-gradient(180deg, #66BB6A 0%, #43A047 100%); 
@@ -61,11 +46,17 @@
       }
       #pokedex-btn:active { transform: translateY(5px); box-shadow: 0 0px 0 #2E7D32, 0 3px 5px rgba(0,0,0,0.4); }
 
-      /* 圖鑑清單樣式 */
       .pokedex-grid { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; max-height: 60vh; overflow-y: auto;}
-      .sprite-item { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; border: 2px dashed #FFEB3B; backdrop-filter: blur(5px);}
+      .sprite-item { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; border: 2px dashed #FFEB3B; backdrop-filter: blur(5px); cursor: pointer; transition: transform 0.1s, background 0.2s;}
+      .sprite-item:active { transform: scale(0.95); background: rgba(255,255,255,0.4); }
       .sprite-item img { width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));}
       .sprite-item p { margin: 10px 0 0 0; font-weight: bold; color: #FFFDE7; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+
+      .detail-info-box {
+        background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+        padding: 18px; border-radius: 12px; text-align: left; width: 85%; max-width: 320px; 
+        margin-bottom: 15px; line-height: 1.6; font-size: 16px;
+      }
     </style>
 
     <script>
@@ -75,6 +66,8 @@
         const questionScreen = document.querySelector('#question-screen');
         const successScreen = document.querySelector('#success-screen');
         const pokedexScreen = document.querySelector('#pokedex-screen');
+        const detailsScreen = document.querySelector('#details-screen'); 
+        const hintScreen = document.querySelector('#hint-screen'); // 新增提示畫面變數
 
         const storyImg = document.querySelector('#story-img');
         const questionImg = document.querySelector('#question-img');
@@ -83,9 +76,24 @@
 
         let currentHero = ""; 
 
+        // 🌟 偉人資料庫：新增了「hint (提示)」欄位
         const heroData = {
-          'locke': { answer: 'B', name: '洛克精靈' },
-          'cai': { answer: 'C', name: '蔡元培精靈' } 
+          'locke': { 
+            answer: 'B', 
+            name: '洛克精靈',
+            title: '經驗主義之父',
+            desc: '出生時的心靈就像一塊「白板」，知識都是靠後天經驗與感官學習寫上去的！',
+            extra: '✨ <b>隱藏知識：</b><br>1. 提倡「紳士教育」，強調品德重於學問。<br>2. 名言：「健全的心智寓於健康的身體」。',
+            hint: '洛克認為知識是「後天經驗」寫上去的，所以禮儀也是需要後天學習，才能改變原本固執的氣質喔！'
+          },
+          'cai': { 
+            answer: 'C', 
+            name: '蔡元培精靈',
+            title: '北大永遠的校長',
+            desc: '大學應該是研究高深學問的地方，對於各種不同的學派，都應秉持「兼容並包」的態度！',
+            extra: '✨ <b>隱藏知識：</b><br>1. 提倡「五育並重」（德智體群美）。<br>2. 提出「以美育代宗教」，認為美感能陶冶高尚情操。',
+            hint: '蔡元培校長最強調「兼容並包」，也就是要能接納、鼓勵各種不同的聲音和社團發展喔！'
+          } 
         };
 
         function hideAllScreens() {
@@ -93,12 +101,12 @@
           questionScreen.classList.remove('active');
           successScreen.classList.remove('active');
           pokedexScreen.classList.remove('active');
+          detailsScreen.classList.remove('active');
+          hintScreen.classList.remove('active'); // 隱藏提示畫面
         }
 
-        // 開啟介面並觸發漸變動畫
         function showUI() {
           uiLayer.style.display = "flex";
-          // 延遲一點點時間觸發 CSS 漸變效果
           setTimeout(() => { uiLayer.style.opacity = "1"; }, 10);
         }
 
@@ -117,18 +125,20 @@
         document.querySelector('#locke-target').addEventListener("targetFound", () => triggerHero('locke'));
         document.querySelector('#cai-target').addEventListener("targetFound", () => triggerHero('cai'));
 
-        window.goToQuestion = function() {
-          hideAllScreens();
-          questionScreen.classList.add('active');
-        };
+        window.goToQuestion = function() { hideAllScreens(); questionScreen.classList.add('active'); };
 
+        // 🌟 檢查答案的邏輯更新
         window.checkAnswer = function(answer) {
           if (answer === heroData[currentHero].answer) {
             hideAllScreens();
             successScreen.classList.add('active');
             localStorage.setItem('has_' + currentHero, 'true');
           } else {
-            alert("❌ 哎呀，精靈逃跑了！\n\n請重新閱讀知識點並再試一次吧！");
+            // 答錯時：不再使用 alert()，改為顯示專屬的提示畫面！
+            hideAllScreens();
+            document.querySelector('#hint-hero-img').src = currentHero + "_sprite.png"; // 顯示該精靈的圖片
+            document.querySelector('#hint-text').innerText = heroData[currentHero].hint; // 抓取專屬提示文字
+            hintScreen.classList.add('active');
           }
         };
 
@@ -142,26 +152,30 @@
           
           let hasAny = false;
           if (localStorage.getItem('has_locke') === 'true') {
-            grid.innerHTML += `<div class="sprite-item"><img src="locke_sprite.png"><p>洛克精靈</p></div>`;
+            grid.innerHTML += `<div class="sprite-item" onclick="showDetails('locke')"><img src="locke_sprite.png"><p>洛克精靈</p></div>`;
             hasAny = true;
           }
           if (localStorage.getItem('has_cai') === 'true') {
-            grid.innerHTML += `<div class="sprite-item"><img src="cai_sprite.png"><p>蔡元培精靈</p></div>`;
+            grid.innerHTML += `<div class="sprite-item" onclick="showDetails('cai')"><img src="cai_sprite.png"><p>蔡元培精靈</p></div>`;
             hasAny = true;
           }
 
-          if (!hasAny) {
-            grid.innerHTML = '<p style="color: #ccc;">尚未收集到任何歷史精靈，快去探索校園吧！</p>';
-          }
+          if (!hasAny) { grid.innerHTML = '<p style="color: #ccc;">尚未收集到任何歷史精靈，快去探索校園吧！</p>'; }
         };
 
-        // 關閉介面：先變透明，再隱藏
+        window.showDetails = function(heroId) {
+          hideAllScreens();
+          document.querySelector('#detail-name').innerText = heroData[heroId].name;
+          document.querySelector('#detail-title').innerText = heroData[heroId].title;
+          document.querySelector('#detail-img').src = heroId + "_sprite.png";
+          document.querySelector('#detail-desc').innerHTML = heroData[heroId].desc;
+          document.querySelector('#detail-extra').innerHTML = heroData[heroId].extra;
+          detailsScreen.classList.add('active');
+        };
+
         window.closeUI = function() {
           uiLayer.style.opacity = "0";
-          setTimeout(() => {
-            uiLayer.style.display = "none";
-            hideAllScreens();
-          }, 500); // 等待0.5秒漸變結束
+          setTimeout(() => { uiLayer.style.display = "none"; hideAllScreens(); }, 500); 
         };
       });
     </script>
@@ -191,13 +205,44 @@
         <h2 id="success-name" style="color: #FFEB3B; text-shadow: 2px 2px 4px #000, 0 0 20px #FFC107;"></h2>
         <img id="sprite-img" src="" class="card" alt="精靈圖" style="transform: scale(1.2); margin: 30px 0;">
         <button class="btn" style="background: linear-gradient(180deg, #4DD0E1 0%, #00ACC1 100%); box-shadow: 0 6px 0 #00838F;" onclick="closeUI()">繼續探索 🗺️</button>
+        <button class="btn" style="background: linear-gradient(180deg, #66BB6A 0%, #43A047 100%); box-shadow: 0 6px 0 #2E7D32; font-size: 18px; margin-top:15px;" onclick="openPokedex()">查看圖鑑</button>
       </div>
 
       <div id="pokedex-screen" class="screen">
         <h2 style="text-shadow: 2px 2px 4px #000;">📖 歷史精靈圖鑑</h2>
+        <p style="color: #FFFDE7; font-size: 14px; margin-top:-10px;">點擊精靈查看詳細隱藏知識！</p>
         <div class="pokedex-grid"></div>
         <button class="btn" style="background: linear-gradient(180deg, #e57373 0%, #f44336 100%); box-shadow: 0 6px 0 #c62828;" onclick="closeUI()">關閉圖鑑 ✖️</button>
       </div>
+
+      <div id="details-screen" class="screen">
+        <h2 id="detail-name" style="color: #FFC107; text-shadow: 2px 2px 4px #000; margin-bottom: 5px;"></h2>
+        <span id="detail-title" style="background: #E91E63; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"></span>
+        
+        <img id="detail-img" src="" style="width: 120px; height: 120px; object-fit: contain; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6)); margin-bottom: 15px;">
+        
+        <div class="detail-info-box">
+          <p id="detail-desc" style="margin-top: 0; color: #FFF;"></p>
+          <hr style="border: 0; border-top: 1px dashed rgba(255, 193, 7, 0.5); margin: 12px 0;">
+          <p id="detail-extra" style="margin-bottom: 0; color: #FFF9C4;"></p>
+        </div>
+
+        <button class="btn" style="background: linear-gradient(180deg, #9E9E9E 0%, #757575 100%); box-shadow: 0 6px 0 #424242;" onclick="openPokedex()">返回圖鑑 ↩️</button>
+      </div>
+
+      <div id="hint-screen" class="screen">
+        <h2 style="color: #FFCDD2; text-shadow: 2px 2px 4px #000; margin-bottom: 5px;">❌ 哎呀，精靈躲起來了！</h2>
+        <p style="color: #FFEB3B; font-size: 16px; margin-top: 0;">別灰心，看看精靈留下的線索：</p>
+        
+        <img id="hint-hero-img" src="" style="width: 100px; height: 100px; object-fit: contain; filter: grayscale(80%) drop-shadow(0 5px 5px rgba(0,0,0,0.8)); margin-bottom: 15px;">
+        
+        <div class="detail-info-box" style="border-color: #EF5350; background: rgba(244, 67, 54, 0.15);">
+          <p id="hint-text" style="color: #FFF; font-size: 18px; font-weight: bold; margin: 0; text-align: center;"></p>
+        </div>
+
+        <button class="btn" style="background: linear-gradient(180deg, #FF9800 0%, #F57C00 100%); box-shadow: 0 6px 0 #E65100;" onclick="goToQuestion()">再試一次 🔄</button>
+      </div>
+
     </div>
 
     <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
